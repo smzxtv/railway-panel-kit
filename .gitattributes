@@ -1,0 +1,7 @@
+# 保持 shell 脚本为 LF, 避免 Windows git autocrlf 破坏容器内执行
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.template text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf

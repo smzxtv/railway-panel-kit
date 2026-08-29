@@ -1,0 +1,15 @@
+name = "node-sub-api"
+main = "api-deploy-it-on-cloudflare.js"
+compatibility_date = "2024-09-01"
+
+# 可选: 绑定 KV 后可通过 API 动态增删节点
+# 创建: npx wrangler kv namespace create NODES_KV
+# [[kv_namespaces]]
+# binding = "NODES_KV"
+# id = "REPLACE_WITH_YOUR_KV_ID"
+
+[vars]
+# 也可将远程 config.json(GitHub raw 等) 地址填到这里
+# CONFIG_URL = "https://raw.githubusercontent.com/USER/REPO/main/config.json"
+# SUB_TOKEN = "your-sub-token"
+# ADMIN_TOKEN = "your-admin-token"

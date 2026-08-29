@@ -1,0 +1,33 @@
+name: Deploy to Railway
+
+# 每次 push 到 main 自动部署; 也可在 Actions 页面手动触发
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: railway-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 多节点: 在仓库 Variables 里配置 RAILWAY_SERVICES, 例如:
+        #   ["railway-node-1","railway-node-2"]
+        # 单节点: 配置为 ["你的服务名"], 或不配置(默认部署名为 railway-node 的服务)
+        service: ${{ fromJSON(vars.RAILWAY_SERVICES || '["railway-node"]') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy service ${{ matrix.service }}
+        run: railway up --service "${{ matrix.service }}" --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

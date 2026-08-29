@@ -1,0 +1,35 @@
+{
+  "subscription": {
+    "title": "My Proxy Nodes",
+    "subToken": "CHANGE_ME_SUB_TOKEN",
+    "adminToken": "CHANGE_ME_ADMIN_TOKEN",
+    "updateInterval": 6,
+    "userInfo": "upload=0; download=0; total=107374182400; expire=0"
+  },
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Railway-Node-1",
+      "protocol": "vless",
+      "host": "your-node-1.up.railway.app",
+      "port": 443,
+      "uuid": "REPLACE_WITH_VLESS_UUID",
+      "path": "/ws",
+      "tls": "tls",
+      "sni": "your-node-1.up.railway.app",
+      "enabled": true
+    },
+    {
+      "id": "node-2",
+      "name": "Railway-Node-2",
+      "protocol": "vless",
+      "host": "your-node-2.up.railway.app",
+      "port": 443,
+      "uuid": "REPLACE_WITH_VLESS_UUID",
+      "path": "/ws",
+      "tls": "tls",
+      "sni": "your-node-2.up.railway.app",
+      "enabled": true
+    }
+  ]
+}

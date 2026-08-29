@@ -1,0 +1,78 @@
+# =====================================================================
+# nginx 模板 — 由 start.sh 用 envsubst 渲染后输出到 /etc/nginx/nginx.conf
+# Railway 只有单一对外端口, 这里做路径分流:
+#   /${XUI_WEB_BASE_PATH}/  -> 3X-UI 面板        (127.0.0.1:${PANEL_PORT})
+#   /${VLESS_WS_PATH}       -> Xray VLESS-WS 入站 (127.0.0.1:${XRAY_PORT})
+# =====================================================================
+
+worker_processes auto;
+pid /run/nginx.pid;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    sendfile on;
+    keepalive_timeout 65;
+    client_max_body_size 32m;
+
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" "$http_user_agent"';
+    access_log /dev/stdout main;
+    error_log /dev/stderr warn;
+
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+        ''      close;
+    }
+
+    server {
+        listen ${PORT};
+        server_name _;
+
+        # 隐藏版本
+        server_tokens off;
+
+        # 健康检查(Railway/Cloudflare 探活)
+        location = /health {
+            access_log off;
+            return 200 "ok\n";
+        }
+
+        # ---------- Xray VLESS-WS 入站 ----------
+        location /${VLESS_WS_PATH} {
+            proxy_pass http://127.0.0.1:${XRAY_PORT};
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade    $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_set_header Host       $host;
+            proxy_set_header X-Real-IP  $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_read_timeout  300s;
+            proxy_send_timeout  300s;
+        }
+
+        # ---------- 3X-UI 面板 ----------
+        location /${XUI_WEB_BASE_PATH}/ {
+            proxy_pass http://127.0.0.1:${PANEL_PORT};
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade    $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_set_header Host       $host;
+            proxy_set_header X-Real-IP  $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_read_timeout  300s;
+            proxy_send_timeout  300s;
+        }
+
+        # 其余路径一律 404, 降低暴露面
+        location / {
+            access_log off;
+            return 404;
+        }
+    }
+}
