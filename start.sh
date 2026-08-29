@@ -49,8 +49,11 @@ trap cleanup EXIT INT TERM
 bash "${APP_DIR}/panel-bootstrap.sh" prestart
 
 # ---------- 4. 前台启动面板 ----------
+# 注意: 3X-UI 的 xray-core 以相对路径(bin/...)写配置, 必须在 /usr/local/x-ui 下启动
+cd /usr/local/x-ui
 "${XUI_BIN}" run &
 PANEL_PID=$!
+cd "${APP_DIR}"
 
 # ---------- 5. 等面板就绪后自动创建入站节点并打印分享链接 ----------
 bash "${APP_DIR}/panel-bootstrap.sh" poststart \
