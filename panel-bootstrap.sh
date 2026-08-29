@@ -111,7 +111,7 @@ do_poststart() {
     fi
     settings="$(jq -cn --arg uuid "${VLESS_UUID}" '
         {clients:[{id:$uuid,flow:"",email:"railway-user",limitIp:0,totalGB:0,
-                   expiryTime:0,enable:true,tgId:"",subId:"railway",reset:0}],
+                   expiryTime:0,enable:true,tgId:0,subId:"railway",reset:0}],
          decryption:"none",fallbacks:[]}')"
     stream="$(jq -cn --arg path "/${VLESS_WS_PATH}" '
         {network:"ws",security:"none",externalProxy:[],
