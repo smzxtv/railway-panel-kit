@@ -101,7 +101,14 @@ do_poststart() {
         return 0
     fi
 
-    local settings stream inbound resp success msg
+    local settings stream inbound resp success msg csrf
+    # v3.7 全站 CSRF 保护: 创建入站的 POST 请求也必须带 token
+    csrf="$(curl -s -b "${COOKIE_FILE}" "$(panel_base)/csrf-token" \
+        | jq -r '.obj // empty' 2>/dev/null || true)"
+    if [[ -z "${csrf}" ]]; then
+        echo "[bootstrap] ERROR: 获取 CSRF token 失败"
+        return 1
+    fi
     settings="$(jq -cn --arg uuid "${VLESS_UUID}" '
         {clients:[{id:$uuid,flow:"",email:"railway-user",limitIp:0,totalGB:0,
                    expiryTime:0,enable:true,tgId:"",subId:"railway",reset:0}],
@@ -120,7 +127,9 @@ do_poststart() {
          tag:$tag}')"
 
     resp="$(curl -s -b "${COOKIE_FILE}" -X POST "$(panel_base)/panel/api/inbounds/add" \
-        -H 'Content-Type: application/json' -d "${inbound}")"
+        -H 'Content-Type: application/json' \
+        -H "X-CSRF-Token: ${csrf}" \
+        -d "${inbound}")"
     success="$(echo "${resp}" | jq -r '.success // false' 2>/dev/null || echo false)"
     msg="$(echo "${resp}" | jq -r '.msg // ""' 2>/dev/null || true)"
     if [[ "${success}" != "true" ]]; then
