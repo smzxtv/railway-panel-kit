@@ -123,7 +123,7 @@ do_poststart() {
                     --arg tag "${INBOUND_TAG}" '
         {up:0,down:0,total:0,remark:$remark,enable:true,expiryTime:0,listen:"",
          port:$port,protocol:"vless",settings:$settings,streamSettings:$stream,
-         sniffing:"{\"enabled\":true,\"destOverride\":[\"http\",\"tls\",\"quic\",\"fhttp\"]}",
+         sniffing:"{\"enabled\":true,\"destOverride\":[\"http\",\"tls\",\"quic\"]}",
          tag:$tag}')"
 
     resp="$(curl -s -b "${COOKIE_FILE}" -X POST "$(panel_base)/panel/api/inbounds/add" \
