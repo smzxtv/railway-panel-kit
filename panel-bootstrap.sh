@@ -55,16 +55,33 @@ wait_panel() {
 }
 
 do_login() {
-    local resp success
-    resp="$(curl -s -c "${COOKIE_FILE}" -X POST "$(panel_base)/login" \
-        --data-urlencode "username=${XUI_USERNAME}" \
-        --data-urlencode "password=${XUI_PASSWORD}")"
-    success="$(echo "${resp}" | jq -r '.success // false' 2>/dev/null || echo false)"
-    if [[ "${success}" != "true" ]]; then
-        echo "[bootstrap] ERROR: 面板登录失败: ${resp}"
+    local base resp token success attempt
+    base="$(panel_base)"
+
+    # v3.7+ 登录需要 CSRF token: 先 GET /csrf-token(同一会话), 再带着 token 登录
+    token="$(curl -s -c "${COOKIE_FILE}" "${base}/csrf-token" \
+        | jq -r '.obj // empty' 2>/dev/null || true)"
+    if [[ -z "${token}" ]]; then
+        echo "[bootstrap] ERROR: 获取 CSRF token 失败"
         return 1
     fi
-    echo "[bootstrap] 面板登录成功 ✓"
+
+    for attempt in 1 2 3; do
+        resp="$(curl -s -b "${COOKIE_FILE}" -c "${COOKIE_FILE}" -X POST "${base}/login" \
+            -H "X-CSRF-Token: ${token}" \
+            --data-urlencode "username=${XUI_USERNAME}" \
+            --data-urlencode "password=${XUI_PASSWORD}" \
+            --data-urlencode "_csrf=${token}")"
+        success="$(echo "${resp}" | jq -r '.success // false' 2>/dev/null || echo false)"
+        if [[ "${success}" == "true" ]]; then
+            echo "[bootstrap] 面板登录成功 ✓"
+            return 0
+        fi
+        echo "[bootstrap] 登录失败(第 ${attempt} 次): ${resp}"
+        sleep 3
+    done
+    echo "[bootstrap] ERROR: 面板登录失败: ${resp}"
+    return 1
 }
 
 # ---------------------------------------------------------------
